@@ -53,7 +53,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 def cli(verbose):
     """condor_necropsy command line tool."""
-    logger.debug(f'CLI called with arguments "{" ".join(sys.argv[1:])}"')
+    logger.debug('CLI called with arguments "{}"'.format(" ".join(sys.argv[1:])))
     if verbose:
         _start_logger()
 

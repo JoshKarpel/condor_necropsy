@@ -134,6 +134,6 @@ def num_bytes_to_str(num_bytes):
     """Return a number of bytes as a human-readable string."""
     for unit in ("B", "KB", "MB", "GB"):
         if num_bytes < 1024:
-            return f"{num_bytes:.1f} {unit}"
+            return "{:.1f} {}".format(num_bytes, unit)
         num_bytes /= 1024
-    return f"{num_bytes:.1f} TB"
+    return "{:.1f} TB".format(num_bytes)

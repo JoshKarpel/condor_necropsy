@@ -20,7 +20,7 @@ __version__ = "0.0.1"
 
 def version() -> str:
     """Return a string containing human-readable version information."""
-    return f"condor_necropsy version {__version__}"
+    return "condor_necropsy version {}".format(__version__)
 
 
 def _version_info(v: str) -> Tuple[int, int, int, str]:
