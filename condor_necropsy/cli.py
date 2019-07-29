@@ -85,6 +85,7 @@ def version():
 @cli.command()
 @click.argument("logs", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def graph(logs):
+    """Make a graph showing the status of the jobs in the logs over time."""
     with make_spinner("Processing events...") as spinner:
         graph = make_state_graph(get_events(*logs))
 
@@ -97,6 +98,7 @@ _HEADER_FMT = functools.partial(click.style, bold=True)
 @cli.command()
 @click.argument("logs", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def stats(logs):
+    """Display summary statistics for a variety of metrics, like runtime and memory usage."""
     with make_spinner("Processing events...") as spinner:
         stats = get_timing_stats_summaries(get_events(*logs))
 

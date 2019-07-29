@@ -32,8 +32,6 @@ import htcondor
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-from .status import JobStatus, JOB_EVENT_STATUS_TRANSITIONS
-
 SUMMARY_HEADERS = ["Statistic", "Mean", "5%", "25%", "Median", "75%", "95%"]
 
 
