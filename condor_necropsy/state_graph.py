@@ -48,7 +48,7 @@ def make_state_graph(events):
     job_state_counts = collections.Counter()
     counts_over_time = []
 
-    for event in events:
+    for event in sorted(events, key=lambda e: e.timestamp):
         event_key = (event.cluster, event.proc)
         new_status = JOB_EVENT_STATUS_TRANSITIONS.get(event.type, None)
 
@@ -68,7 +68,7 @@ def make_state_graph(events):
     width = term.columns - 10
     height = term.lines - 10
 
-    graph = histogram(counts_over_time, width, height)
+    graph = make_bars(counts_over_time, width, height)
 
     rows = ["│" + row for row in graph.splitlines()]
     rows.append("└" + ("─" * (width)))
@@ -124,7 +124,7 @@ def merge_strings(*strings):
     return "".join(out)
 
 
-def histogram(counts_over_time, width, height):
+def make_bars(counts_over_time, width, height):
     first_time, _ = counts_over_time[0]
     last_time, last_counts = counts_over_time[-1]
 
