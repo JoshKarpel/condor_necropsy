@@ -1,0 +1,4 @@
+htcondor >= 8.8.0
+click >= 7.0.0
+click-didyoumean
+halo
