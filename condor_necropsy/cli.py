@@ -16,6 +16,7 @@
 import logging
 import sys
 import random
+import functools
 
 import click
 from click_didyoumean import DYMGroup
@@ -25,6 +26,8 @@ from spinners import Spinners
 
 from .events import get_events
 from .state_graph import make_state_graph
+from .stats import get_timing_stats_summaries, SUMMARY_HEADERS
+from .table import table
 from .version import version
 
 logger = logging.getLogger(__name__)
@@ -86,6 +89,20 @@ def graph(logs):
         graph = make_state_graph(get_events(*logs))
 
     click.echo(graph)
+
+
+_HEADER_FMT = functools.partial(click.style, bold=True)
+
+
+@cli.command()
+@click.argument("logs", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def stats(logs):
+    with make_spinner("Processing events...") as spinner:
+        stats = get_timing_stats_summaries(get_events(*logs))
+
+    tab = table(headers=SUMMARY_HEADERS, rows=stats, header_fmt=_HEADER_FMT)
+
+    click.echo(tab)
 
 
 if __name__ == "__main__":
