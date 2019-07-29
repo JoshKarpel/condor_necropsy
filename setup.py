@@ -23,12 +23,10 @@ THIS_DIR = Path(os.path.abspath(os.path.dirname(__file__)))
 
 
 def find_version():
-    """Grab the version out of htmap/version.py without importing it."""
-    version_file_text = (THIS_DIR / 'condor_necropsy' / 'version.py').read_text()
+    """Grab the version out of condor_necropsy/version.py without importing it."""
+    version_file_text = (THIS_DIR / "condor_necropsy" / "version.py").read_text()
     version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]",
-        version_file_text,
-        re.M,
+        r"^__version__ = ['\"]([^'\"]*)['\"]", version_file_text, re.M
     )
     if version_match:
         return version_match.group(1)
@@ -36,13 +34,13 @@ def find_version():
 
 
 setup(
-    name = 'condor_necropsy',
-    version = find_version(),
-    author = 'Josh Karpel',
-    author_email = 'josh.karpel@gmail.com',
-    long_description = Path('README.md').read_text(),
-    long_description_content_type = "text/markdown",
-    classifiers = [
+    name="condor_necropsy",
+    version=find_version(),
+    author="Josh Karpel",
+    author_email="josh.karpel@gmail.com",
+    long_description=Path("README.md").read_text(),
+    long_description_content_type="text/markdown",
+    classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
@@ -52,13 +50,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Topic :: System :: Distributed Computing",
     ],
-    packages = [
-        'condor_necropsy',
-    ],
-    entry_points = {
-        'console_scripts': [
-            'condor_necropsy = condor_necropsy.cli:cli',
-        ],
-    },
-    install_requires = Path('requirements.txt').read_text().splitlines(),
+    packages=["condor_necropsy"],
+    entry_points={"console_scripts": ["condor_necropsy = condor_necropsy.cli:cli"]},
+    install_requires=Path("requirements.txt").read_text().splitlines(),
 )

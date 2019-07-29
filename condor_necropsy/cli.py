@@ -23,30 +23,30 @@ from click_didyoumean import DYMGroup
 from halo import Halo
 from spinners import Spinners
 
+from .events import get_events
+from .state_graph import make_state_graph
+from .version import version
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-SPINNERS = list(name for name in Spinners.__members__ if name.startswith('dots'))
+SPINNERS = list(name for name in Spinners.__members__ if name.startswith("dots"))
 
 
 def make_spinner(*args, **kwargs):
-    return Halo(
-        *args,
-        spinner = random.choice(SPINNERS),
-        stream = sys.stderr,
-        **kwargs,
-    )
+    return Halo(*args, spinner=random.choice(SPINNERS), stream=sys.stderr, **kwargs)
 
 
-CONTEXT_SETTINGS = dict(help_option_names = ['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-@click.group(context_settings = CONTEXT_SETTINGS, cls = DYMGroup)
+@click.group(context_settings=CONTEXT_SETTINGS, cls=DYMGroup)
 @click.option(
-    '--verbose', '-v',
-    is_flag = True,
-    default = False,
-    help = 'Show log messages as the CLI runs.',
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show log messages as the CLI runs.",
 )
 def cli(verbose):
     """condor_necropsy command line tool."""
@@ -57,17 +57,36 @@ def cli(verbose):
 
 def _start_logger():
     """Initialize a basic logger for condor_necropsy for the CLI."""
-    htmap_logger = logging.getLogger('condor_necropsy')
-    htmap_logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger("condor_necropsy")
+    logger.setLevel(logging.DEBUG)
 
-    handler = logging.StreamHandler(stream = sys.stderr)
+    handler = logging.StreamHandler(stream=sys.stderr)
     handler.setLevel(logging.DEBUG)
-    handler.setFormatter(logging.Formatter('%(asctime)s ~ %(levelname)s ~ %(name)s:%(funcName)s:%(lineno)d ~ %(message)s'))
+    handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s ~ %(levelname)s ~ %(name)s:%(funcName)s:%(lineno)d ~ %(message)s"
+        )
+    )
 
-    htmap_logger.addHandler(handler)
+    logger.addHandler(handler)
 
     return handler
 
 
-if __name__ == '__main__':
+@cli.command()
+def version():
+    """Print condor_necropsy version information."""
+    click.echo(version())
+
+
+@cli.command()
+@click.argument("logs", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def graph(logs):
+    with make_spinner("Processing events...") as spinner:
+        graph = make_state_graph(get_events(*logs))
+
+    click.echo(graph)
+
+
+if __name__ == "__main__":
     cli()
