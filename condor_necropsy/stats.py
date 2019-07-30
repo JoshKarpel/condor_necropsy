@@ -78,9 +78,12 @@ def get_timing_stats_summaries(events):
             elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_STARTED:
                 transfer_output_start[key] = event.timestamp
             elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_FINISHED:
-                transfer_output_time[key] = datetime.timedelta(
-                    seconds=event.timestamp - transfer_output_start[key]
-                )
+                try:
+                    transfer_output_time[key] = datetime.timedelta(
+                        seconds=event.timestamp - transfer_output_start[key]
+                    )
+                except KeyError:
+                    pass
 
         elif event.type is htcondor.JobEventType.JOB_TERMINATED:
             runtime[key] = parse_runtime(event["RunRemoteUsage"])
