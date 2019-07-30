@@ -44,8 +44,12 @@ def get_timing_stats_summaries(events):
     time_to_first_start = {}
     runtime = {}
     memory_usage = {}
+    transfer_input_queued = {}
+    transfer_input_queue_time = {}
     transfer_input_start = {}
     transfer_input_time = {}
+    transfer_output_queued = {}
+    transfer_output_queue_time = {}
     transfer_output_start = {}
     transfer_output_time = {}
 
@@ -69,14 +73,26 @@ def get_timing_stats_summaries(events):
         elif event.type is htcondor.JobEventType.FILE_TRANSFER:
             transfer_event_type = TransferEventType(event["Type"])
 
-            if transfer_event_type is TransferEventType.INPUT_TRANSFER_STARTED:
+            if transfer_event_type is TransferEventType.INPUT_TRANSFER_QUEUED:
+                transfer_input_queued[key] = event.timestamp
+            elif transfer_event_type is TransferEventType.INPUT_TRANSFER_STARTED:
                 transfer_input_start[key] = event.timestamp
+                transfer_input_queue_time[key] = datetime.timedelta(
+                    seconds=event.timestamp
+                    - transfer_input_queued.get(key, event.timestamp)
+                )
             elif transfer_event_type is TransferEventType.INPUT_TRANSFER_FINISHED:
                 transfer_input_time[key] = datetime.timedelta(
                     seconds=event.timestamp - transfer_input_start[key]
                 )
+            elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_QUEUED:
+                transfer_output_queued[key] = event.timestamp
             elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_STARTED:
                 transfer_output_start[key] = event.timestamp
+                transfer_output_queue_time[key] = datetime.timedelta(
+                    seconds=event.timestamp
+                    - transfer_output_queued.get(key, event.timestamp)
+                )
             elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_FINISHED:
                 try:
                     transfer_output_time[key] = datetime.timedelta(
@@ -101,13 +117,25 @@ def get_timing_stats_summaries(events):
     transfer_output_summary = make_summary(
         transfer_output_time, "Output Transfer Time", post_process=chop_microseconds
     )
+    transfer_input_queue_summary = make_summary(
+        transfer_input_queue_time,
+        "Input Transfer Queue",
+        post_process=chop_microseconds,
+    )
+    transfer_output_queue_summary = make_summary(
+        transfer_output_queue_time,
+        "Output Transfer Queue",
+        post_process=chop_microseconds,
+    )
 
     return (
         runtime_summary,
         time_to_first_start_summary,
-        memory_usage_summary,
         transfer_input_summary,
         transfer_output_summary,
+        transfer_input_queue_summary,
+        transfer_output_queue_summary,
+        memory_usage_summary,
     )
 
 
