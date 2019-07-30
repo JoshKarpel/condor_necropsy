@@ -44,6 +44,10 @@ def get_timing_stats_summaries(events):
     time_to_first_start = {}
     runtime = {}
     memory_usage = {}
+    transfer_input_start = {}
+    transfer_input_time = {}
+    transfer_output_start = {}
+    transfer_output_time = {}
 
     for event in events:
         key = (event.cluster, event.proc)
@@ -62,6 +66,22 @@ def get_timing_stats_summaries(events):
                 memory_usage.get(key, 0), int(event["MemoryUsage"]) * (1024 ** 2)
             )
 
+        elif event.type is htcondor.JobEventType.FILE_TRANSFER:
+            transfer_event_type = TransferEventType(event["Type"])
+
+            if transfer_event_type is TransferEventType.INPUT_TRANSFER_STARTED:
+                transfer_input_start[key] = event.timestamp
+            elif transfer_event_type is TransferEventType.INPUT_TRANSFER_FINISHED:
+                transfer_input_time[key] = datetime.timedelta(
+                    seconds=event.timestamp - transfer_input_start[key]
+                )
+            elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_STARTED:
+                transfer_output_start[key] = event.timestamp
+            elif transfer_event_type is TransferEventType.OUTPUT_TRANSFER_FINISHED:
+                transfer_output_time[key] = datetime.timedelta(
+                    seconds=event.timestamp - transfer_output_start[key]
+                )
+
         elif event.type is htcondor.JobEventType.JOB_TERMINATED:
             runtime[key] = parse_runtime(event["RunRemoteUsage"])
 
@@ -72,8 +92,29 @@ def get_timing_stats_summaries(events):
     memory_usage_summary = make_summary(
         memory_usage, "Memory Usage", post_process=num_bytes_to_str
     )
+    transfer_input_summary = make_summary(
+        transfer_input_time, "Input Transfer Time", post_process=chop_microseconds
+    )
+    transfer_output_summary = make_summary(
+        transfer_output_time, "Output Transfer Time", post_process=chop_microseconds
+    )
 
-    return (runtime_summary, time_to_first_start_summary, memory_usage_summary)
+    return (
+        runtime_summary,
+        time_to_first_start_summary,
+        memory_usage_summary,
+        transfer_input_summary,
+        transfer_output_summary,
+    )
+
+
+class TransferEventType(enum.IntEnum):
+    INPUT_TRANSFER_QUEUED = 1
+    INPUT_TRANSFER_STARTED = 2
+    INPUT_TRANSFER_FINISHED = 3
+    OUTPUT_TRANSFER_QUEUED = 4
+    OUTPUT_TRANSFER_STARTED = 5
+    OUTPUT_TRANSFER_FINISHED = 6
 
 
 def make_summary(data, name, post_process=None):
