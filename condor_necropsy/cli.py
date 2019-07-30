@@ -27,7 +27,7 @@ from spinners import Spinners
 from .events import get_events
 from .state_graph import make_state_graph
 from .stats import get_timing_stats_summaries, SUMMARY_HEADERS
-from .table import table
+from .utils import table
 from .version import version
 
 logger = logging.getLogger(__name__)

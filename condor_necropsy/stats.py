@@ -15,19 +15,13 @@
 
 import logging
 
-import itertools
-import statistics
-
 import math
-import sys
-import collections
 import datetime
 import enum
-import shutil
-
-import click
 
 import htcondor
+
+from . import utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -109,7 +103,7 @@ def get_timing_stats_summaries(events):
         time_to_first_start, "Time to First Start", post_process=chop_microseconds
     )
     memory_usage_summary = make_summary(
-        memory_usage, "Memory Usage", post_process=num_bytes_to_str
+        memory_usage, "Memory Usage", post_process=utils.num_bytes_to_str
     )
     transfer_input_summary = make_summary(
         transfer_input_time, "Input Transfer Time", post_process=chop_microseconds
@@ -200,12 +194,3 @@ def percentile(values, percentile, key=None):
     lower = key(values[int(f)]) * (c - k)
     upper = key(values[int(c)]) * (k - f)
     return lower + upper
-
-
-def num_bytes_to_str(num_bytes):
-    """Return a number of bytes as a human-readable string."""
-    for unit in ("B", "KB", "MB", "GB"):
-        if num_bytes < 1024:
-            return "{:.1f} {}".format(num_bytes, unit)
-        num_bytes /= 1024
-    return "{:.1f} TB".format(num_bytes)
