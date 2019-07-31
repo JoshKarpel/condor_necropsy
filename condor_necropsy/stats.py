@@ -33,7 +33,31 @@ def chop_microseconds(delta):
     return delta - datetime.timedelta(microseconds=delta.microseconds)
 
 
-def get_timing_stats_summaries(events):
+class EventData:
+    def __init__(
+        self,
+        submitted_at,
+        note,
+        runtime,
+        memory_usage,
+        time_to_first_start,
+        transfer_input_queue_time,
+        transfer_output_queue_time,
+        transfer_input_time,
+        transfer_output_time,
+    ):
+        self.submitted_at = submitted_at
+        self.note = note
+        self.runtime = runtime
+        self.memory_usage = memory_usage
+        self.time_to_first_start = time_to_first_start
+        self.transfer_output_queue_time = transfer_output_queue_time
+        self.transfer_input_queue_time = transfer_input_queue_time
+        self.transfer_input_time = transfer_input_time
+        self.transfer_output_time = transfer_output_time
+
+
+def extract_data(events):
     submitted_at = {}
     time_to_first_start = {}
     runtime = {}
@@ -46,12 +70,14 @@ def get_timing_stats_summaries(events):
     transfer_output_queue_time = {}
     transfer_output_start = {}
     transfer_output_time = {}
+    note = {}
 
     for event in events:
         key = (event.cluster, event.proc)
 
         if event.type is htcondor.JobEventType.SUBMIT:
             submitted_at[key] = event.timestamp
+            note[key] = event.get("LogNotes", None)
 
         elif event.type is htcondor.JobEventType.EXECUTE:
             if key not in time_to_first_start:
@@ -98,26 +124,48 @@ def get_timing_stats_summaries(events):
         elif event.type is htcondor.JobEventType.JOB_TERMINATED:
             runtime[key] = parse_runtime(event["RunRemoteUsage"])
 
-    runtime_summary = make_summary(runtime, "Runtime", post_process=chop_microseconds)
+    return EventData(
+        submitted_at=submitted_at,
+        note=note,
+        runtime=runtime,
+        memory_usage=memory_usage,
+        time_to_first_start=time_to_first_start,
+        transfer_input_queue_time=transfer_input_queue_time,
+        transfer_output_queue_time=transfer_output_queue_time,
+        transfer_input_time=transfer_input_time,
+        transfer_output_time=transfer_output_time,
+    )
+
+
+def make_summaries(event_data):
+    runtime_summary = make_summary(
+        event_data.runtime, "Runtime", post_process=chop_microseconds
+    )
     time_to_first_start_summary = make_summary(
-        time_to_first_start, "Time to First Start", post_process=chop_microseconds
+        event_data.time_to_first_start,
+        "Time to First Start",
+        post_process=chop_microseconds,
     )
     memory_usage_summary = make_summary(
-        memory_usage, "Memory Usage", post_process=utils.num_bytes_to_str
+        event_data.memory_usage, "Memory Usage", post_process=utils.num_bytes_to_str
     )
     transfer_input_summary = make_summary(
-        transfer_input_time, "Input Transfer Time", post_process=chop_microseconds
+        event_data.transfer_input_time,
+        "Input Transfer Time",
+        post_process=chop_microseconds,
     )
     transfer_output_summary = make_summary(
-        transfer_output_time, "Output Transfer Time", post_process=chop_microseconds
+        event_data.transfer_output_time,
+        "Output Transfer Time",
+        post_process=chop_microseconds,
     )
     transfer_input_queue_summary = make_summary(
-        transfer_input_queue_time,
+        event_data.transfer_input_queue_time,
         "Input Transfer Queue",
         post_process=chop_microseconds,
     )
     transfer_output_queue_summary = make_summary(
-        transfer_output_queue_time,
+        event_data.transfer_output_queue_time,
         "Output Transfer Queue",
         post_process=chop_microseconds,
     )

@@ -26,7 +26,7 @@ from spinners import Spinners
 
 from .events import get_events
 from .state_graph import make_state_graph
-from .stats import get_timing_stats_summaries, SUMMARY_HEADERS
+from .stats import extract_data, make_summaries, SUMMARY_HEADERS
 from .utils import table
 from .version import version
 
@@ -100,7 +100,8 @@ _HEADER_FMT = functools.partial(click.style, bold=True)
 def stats(logs):
     """Display summary statistics for a variety of metrics, like runtime and memory usage."""
     with make_spinner("Processing events...") as spinner:
-        stats = get_timing_stats_summaries(get_events(*logs))
+        event_data = extract_data(get_events(*logs))
+        stats = make_summaries(event_data)
 
     tab = table(headers=SUMMARY_HEADERS, rows=stats, header_fmt=_HEADER_FMT)
 
