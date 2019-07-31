@@ -19,6 +19,8 @@ import math
 import datetime
 import enum
 
+import pandas as pd
+
 import htcondor
 
 from . import utils
@@ -31,6 +33,19 @@ SUMMARY_HEADERS = ["Statistic", "Mean", "5%", "25%", "Median", "75%", "95%"]
 
 def chop_microseconds(delta):
     return delta - datetime.timedelta(microseconds=delta.microseconds)
+
+
+COLUMNS = [
+    "note",
+    "submitted_at",
+    "runtime",
+    "memory_usage",
+    "time_to_first_start",
+    "transfer_output_queue_time",
+    "transfer_input_queue_time",
+    "transfer_input_time",
+    "transfer_output_time",
+]
 
 
 class EventData:
@@ -55,6 +70,22 @@ class EventData:
         self.transfer_input_queue_time = transfer_input_queue_time
         self.transfer_input_time = transfer_input_time
         self.transfer_output_time = transfer_output_time
+
+    def as_dataframe(self):
+        rows = [
+            (key[0], key[1], *(getattr(self, col).get(key, None) for col in COLUMNS))
+            for key in sorted(self.submitted_at.keys())
+        ]
+
+        df = pd.DataFrame.from_records(
+            data=rows, columns=["cluster", "proc"] + COLUMNS, index=["cluster", "proc"]
+        )
+
+        for col in df:
+            if "time" in col:
+                df[col] = df[col].astype("timedelta64[s]")
+
+        return df
 
 
 def extract_data(events):

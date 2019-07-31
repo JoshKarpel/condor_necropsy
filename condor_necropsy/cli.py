@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import logging
 import sys
 import random
@@ -23,6 +24,8 @@ from click_didyoumean import DYMGroup
 
 from halo import Halo
 from spinners import Spinners
+
+import matplotlib.pyplot as plt
 
 from .events import get_events
 from .state_graph import make_state_graph
@@ -106,6 +109,33 @@ def stats(logs):
     tab = table(headers=SUMMARY_HEADERS, rows=stats, header_fmt=_HEADER_FMT)
 
     click.echo(tab)
+
+
+@cli.command()
+@click.argument("logs", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+@click.option(
+    "--data", required=True, help="Which kind of data to make a histogram for."
+)
+@click.option("--groupby", default=None, help="Which kind of data to group over.")
+@click.option("--name", default="hist")
+@click.option("--format", default="png")
+@click.option("--bins", type=int, default=10)
+def hist(logs, data, groupby, name, format, bins):
+    with make_spinner("Processing events...") as spinner:
+        df = extract_data(get_events(*logs)).as_dataframe()
+        spinner.succeed("Processed events")
+
+    with make_spinner(f"Making histogram for {data}...") as spinner:
+        hist = df.hist(column=data, by=groupby, sharex=True, sharey=True, bins=bins)
+        for ax in itertools.chain(*hist):
+            ax.set_xlabel(data)
+            ax.set_ylabel("Frequency")
+            ax.tick_params(labelleft=True, labelbottom=True)
+        plt.tight_layout()
+        plt.savefig(f"{name}.{format}")
+        plt.close()
+
+        spinner.succeed(f"Made histogram for {data}")
 
 
 if __name__ == "__main__":
