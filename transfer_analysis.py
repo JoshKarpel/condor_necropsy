@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from condor_necropsy import stats
 from condor_necropsy.events import get_events
 
-data = stats.extract_data(get_events("events_combined"))
+data = stats.extract_data(get_events("combined.log"))
 
 df = data.as_dataframe()
 
@@ -17,6 +17,33 @@ GB = 1024 ** 3
 
 input_size = 50 * GB
 df["transfer_input_rate"] = (input_size / MB) / df["transfer_input_time"]
+df["Facility"] = df["note"]
+
+
+def q05(x):
+    return x.quantile(0.05)
+
+
+def q25(x):
+    return x.quantile(0.25)
+
+
+def q50(x):
+    return x.quantile(0.50)
+
+
+def q75(x):
+    return x.quantile(0.75)
+
+
+def q95(x):
+    return x.quantile(0.95)
+
+
+f = {"transfer_input_rate": ["mean", q05, q25, q50, q75, q95]}
+grouped_rates = df.groupby("Facility")
+print(grouped_rates.agg(f).round(1))
+
 max_rate = df["transfer_input_rate"].max()
 num_bins = 20
 
